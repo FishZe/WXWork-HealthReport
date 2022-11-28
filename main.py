@@ -1,8 +1,10 @@
+import time
+
 import json
-from win10toast import ToastNotifier
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from Api import Api
+from Notice import Notice
 
 
 # 获取问题答案
@@ -64,7 +66,8 @@ def getAllAnswer(items):
 
 
 def cornReport(api):
-    print("It's time to report!")
+    n = Notice()
+    n.notice("info", "Report", "Start to report!")
     reportInfo = api.getReportInfo()
     questions = reportInfo['question']['items']
     answers = getAllAnswer(questions)
@@ -72,8 +75,8 @@ def cornReport(api):
         originQuestions = json.load(f)
     if questions != originQuestions:
         # 题目有变化
-        toast = ToastNotifier()
-        toast.show_toast(title="Report Content Changed", msg="Please Update Your Answer", duration=30)
+        n = Notice()
+        n.notice("warning", "Report Content Changed", "Please Update Your Answer")
         newAnswers = []
         for i in questions:
             if i not in originQuestions and not ("status" in i.keys() and i["status"] == 2):
@@ -96,8 +99,9 @@ def cornReport(api):
 if __name__ == "__main__":
     with open("./json/cookies.json", "r") as f:
         cookies = json.load(f)
-    getAllAnswer()
+
     api = Api(cookies)
+    api.getUserInfo()
     cornReport(api)
     schedule = BackgroundScheduler()
     schedule.add_job(api.getUserInfo, 'interval', seconds=300)
@@ -105,5 +109,5 @@ if __name__ == "__main__":
     schedule.start()
 
     while True:
-        pass
+        time.sleep(10)
 

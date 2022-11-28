@@ -1,7 +1,8 @@
 import json
 import time
 import requests
-from win10toast import ToastNotifier
+
+from Notice import Notice
 
 
 class Api():
@@ -13,7 +14,8 @@ class Api():
         }
 
     def getUserInfo(self):
-        print("try to get user info")
+        n = Notice()
+        n.notice("info", "Auto Health Report Info", "Try to get user info")
         url = f"https://work.weixin.qq.com/healthreport/getuserpartyinfo"
         r = requests.post(url,
                           headers=self.headers,
@@ -21,9 +23,8 @@ class Api():
                           data={"operatorid": self.cookies['wedrive_uin'], "vids": self.cookies['wedrive_uin']})
         res = json.loads(r.text)
         if res['result']['errCode'] != 0:
-            toast = ToastNotifier()
-            toast.show_toast(title="Auto Health Report Error",
-                             msg="Your cookies may be expired, please update your cookies.json file.", duration=10)
+            n = Notice()
+            n.notice("error", "Auto Health Report Error", "Your cookies may be expired, please update your cookies.json file.")
 
     def getReportInfo(self):
         url = f"https://work.weixin.qq.com/healthreport/share?_t={time.time()}&f=json&form_id=AGkA4wfzAA0_AGkA4wfz-A0AH8AtgaFAFoxwj9N5t3Ql{int(time.time()) -int(time.time()-time.timezone) % 86400}"
@@ -46,14 +47,12 @@ class Api():
             r = requests.post(url, headers=self.headers, cookies=self.cookies, files=data)
             res = json.loads(r.text)
             if res['result']['errCode'] != 0:
-                toast = ToastNotifier()
-                toast.show_toast(title="Auto Health Report Error",
-                                 msg="Submit Error, please check your cookies and update cookies.json", duration=30)
+                n = Notice()
+                n.notice("error", "Auto Health Report Error", "Submit Error, please check your cookies and update cookies.json")
             else:
-                toast = ToastNotifier()
-                toast.show_toast(title="Auto Health Report Success", msg="Submit Success", duration=10)
+                n = Notice()
+                n.notice("success", "Auto Health Report Success", "Submit Success")
         except Exception as e:
             print(e)
-            toast = ToastNotifier()
-            toast.show_toast(title="Auto Health Report Error",
-                             msg="Unknown Error, please copy the error information and make a new issue to me", duration=60)
+            n = Notice()
+            n.notice("error", "Auto Health Report Error", "Unknown Error, please copy the error information and make a new issue to me")
