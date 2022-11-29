@@ -65,10 +65,19 @@ def getAllAnswer(items):
     return originAnswer
 
 
+def checkReport(api):
+    reportInfo = api.getReportInfo()
+    if "answer_id" in reportInfo.keys():
+        # 已经提交过
+        return reportInfo['answer_id']
+    else:
+        return -1
+
+
 def cornReport(api):
     n = Notice()
     n.notice("info", "Report", "Start to report!")
-    reportInfo = api.getReportInfo()
+    reportInfo = api.getReportInfo()['form']
     questions = reportInfo['question']['items']
     answers = getAllAnswer(questions)
     with open("./json/report.json", "r") as f:
@@ -85,7 +94,6 @@ def cornReport(api):
                 for j in answers:
                     if j['question_id'] == nowAnswer['question_id']:
                         newAnswers.append(nowAnswer)
-                        break
                     else:
                         newAnswers.append(j)
                 answers = newAnswers
@@ -94,6 +102,15 @@ def cornReport(api):
         with open("./json/report.json", "w") as f:
             f.write(json.dumps(questions))
     api.submitReport(answers)
+    code = checkReport(api)
+    if code == -1:
+        n = Notice()
+        n.notice("error", "Report error", "Report Failed! I will try again in 10 senconds.")
+        time.sleep(10)
+        cornReport(api)
+    else:
+        n = Notice()
+        n.notice("success", "Auto Health Report Success", "Submit Success! Your answer id is " + str(code))
 
 
 if __name__ == "__main__":
@@ -104,8 +121,8 @@ if __name__ == "__main__":
     api.getUserInfo()
     cornReport(api)
     schedule = BackgroundScheduler()
-    schedule.add_job(api.getUserInfo, 'interval', seconds=300)
-    schedule.add_job(cornReport, 'cron', hour='0', minute='0', second='0', args=[api])
+    schedule.add_job(api.getUserInfo, 'interval', seconds=300, timezone='Asia/Shanghai')
+    schedule.add_job(cornReport, 'cron', hour='0', minute='0', second='0', timezone='Asia/Shanghai', args=[api])
     schedule.start()
 
     while True:

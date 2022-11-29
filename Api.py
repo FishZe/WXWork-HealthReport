@@ -30,7 +30,7 @@ class Api():
         url = f"https://work.weixin.qq.com/healthreport/share?_t={time.time()}&f=json&form_id=AGkA4wfzAA0_AGkA4wfz-A0AH8AtgaFAFoxwj9N5t3Ql{int(time.time()) -int(time.time()-time.timezone) % 86400}"
         r = requests.post(url, headers=self.headers, cookies=self.cookies)
         res = json.loads(r.text)
-        return res['data']['form']
+        return res['data']
 
     def submitReport(self, answer):
         url = "https://work.weixin.qq.com/healthreport/share?f=json"
@@ -49,9 +49,6 @@ class Api():
             if res['result']['errCode'] != 0:
                 n = Notice()
                 n.notice("error", "Auto Health Report Error", "Submit Error, please check your cookies and update cookies.json")
-            else:
-                n = Notice()
-                n.notice("success", "Auto Health Report Success", "Submit Success")
         except Exception as e:
             print(e)
             n = Notice()
