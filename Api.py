@@ -13,7 +13,7 @@ class Api():
             "origin": "https://work.weixin.qq.com",
         }
 
-    def getUserInfo(self):
+    def getUserInfo(self) -> bool:
         n = Notice()
         n.notice("info", "Auto Health Report Info", "Try to get user info")
         url = f"https://work.weixin.qq.com/healthreport/getuserpartyinfo"
@@ -25,6 +25,8 @@ class Api():
         if res['result']['errCode'] != 0:
             n = Notice()
             n.notice("error", "Auto Health Report Error", "Your cookies may be expired, please update your cookies.json file.")
+            return False
+        return True
 
     def getReportInfo(self):
         url = f"https://work.weixin.qq.com/healthreport/share?_t={time.time()}&f=json&form_id=AGkA4wfzAA0_AGkA4wfz-A0AH8AtgaFAFoxwj9N5t3Ql{int(time.time()) -int(time.time()-time.timezone) % 86400}"

@@ -74,6 +74,31 @@ def checkReport(api):
         return -1
 
 
+def startCheck(api) -> bool:
+    if not api.getUserInfo():
+        n = Notice()
+        n.notice("error", "Cookies Error", "Your Cookies may be expired, please input the cookies in the health report page.")
+        return False
+    with open('./json/report.json', "r") as f:
+        report = json.load(f)
+    if report == [] or report is None or report == {}:
+        reportInfo = api.getReportInfo()['form']
+        questions = reportInfo['question']['items']
+        with open("./json/report.json", "w") as f:
+            f.write(json.dumps(questions))
+        time.sleep(1)
+    with open("./json/answer.json", "r") as f:
+        answer = json.load(f)
+    if answer == [] or answer is None or answer == {}:
+        # 答案为空
+        reportInfo = api.getReportInfo()['form']
+        questions = reportInfo['question']['items']
+        answers = getAllAnswer(questions)
+        with open("./json/answer.json", "w") as f:
+            f.write(json.dumps(answers))
+    return True
+
+
 def cornReport(api):
     n = Notice()
     n.notice("info", "Report", "Start to report!")
@@ -117,9 +142,17 @@ if __name__ == "__main__":
     with open("./json/cookies.json", "r") as f:
         cookies = json.load(f)
 
+    if cookies == [] or cookies is None or cookies == {}:
+        n = Notice()
+        n.notice("error", "Cookies Error", "Please set your cookies in json/cookies.json")
+        exit(0)
+
     api = Api(cookies)
-    api.getUserInfo()
-    cornReport(api)
+    if not startCheck(api):
+        exit(0)
+    else:
+        n = Notice()
+        n.notice("info", "Auto Check Success", "Now start to corn report")
     schedule = BackgroundScheduler()
     schedule.add_job(api.getUserInfo, 'interval', seconds=300, timezone='Asia/Shanghai')
     schedule.add_job(cornReport, 'cron', hour='0', minute='0', second='0', timezone='Asia/Shanghai', args=[api])
