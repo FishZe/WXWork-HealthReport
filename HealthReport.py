@@ -27,6 +27,7 @@ def getQuestionAnswer(item: dict) -> dict:
         res['option_reply'] = [answer]
     else:
         # 填空题
+        answer = ""
         if "reply_type" in item.keys() and item['reply_type'] == 5:
             # 获取定位题目
             print(
@@ -105,6 +106,8 @@ def cornReport(api, formId, answerId=-1):
     questions = api.getReportInfo(formId)
     if questions == [] or questions is None or questions == {}:
         n.notice("error", "Report Error", "Get report info error, please check your cookies and try again later.")
+        time.sleep(10)
+        cornReport(api, formId, answerId)
         return
     answers = getAllAnswer(questions['form']['question']['items'])
     api.submitReport(answers, formId, answerId)
@@ -174,7 +177,10 @@ def startChecker(api: Api) -> bool:
     if reportInfo == [] or reportInfo is None or reportInfo == {}:
         n.notice("error", "Get Report Error", "Get report question error, please check your report.")
         return False
-    answers = getAllAnswer(reportInfo['form']['question']['items'])
+    getAllAnswer(reportInfo['form']['question']['items'])
     if "answer_id" in reportInfo.keys():
         n.notice("info", "Report", f"You have already submitted the report, your id is {reportInfo['answer_id']}")
+    else:
+        n.notice("info", "Report", f"You haven't submitted the report, I'll submit it for you.")
+        cornReport(api, reportId)
     return True

@@ -1,6 +1,3 @@
-import time
-
-import json
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from HealthReport import *
