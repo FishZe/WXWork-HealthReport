@@ -14,6 +14,7 @@ if __name__ == "__main__":
         n.notice("error", "Cookies Error", "Please set your cookies in json/cookies.json")
         exit(0)
 
+    cookies['wedrive_uin'] = cookies['wwapp.vid']
     api = Api(cookies)
     if not startChecker(api):
         n = Notice()

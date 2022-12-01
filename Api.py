@@ -48,8 +48,9 @@ class Api:
             res = json.loads(r.text)
             if res['result']['errCode'] != 0:
                 n = Notice()
-                n.notice("error", "Get Report Lists Error", "please check if your cookies is expired")
-                return {}
+                n.notice("error", "Get Report Lists Error", "I'll tried it later.")
+                time.sleep(5)
+                return self.getReportList()
         except Exception as e:
             print(e)
             n = Notice()
@@ -65,8 +66,8 @@ class Api:
             res = json.loads(r.text)
             if res['result']['errCode'] != 0:
                 n = Notice()
-                n.notice("error", "Get Report Info Error", "please check if your cookies is expired")
-                return {}
+                n.notice("error", "Get Report Info Error", "I'll tried it later.")
+                return self.getReportInfo(formId)
         except Exception as e:
             print(e)
             n = Notice()
