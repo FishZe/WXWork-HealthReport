@@ -26,7 +26,7 @@ if __name__ == "__main__":
     reportId = getReportId(api)
     schedule = BackgroundScheduler()
     schedule.add_job(api.getUserInfo, 'interval', seconds=300, timezone='Asia/Shanghai')
-    schedule.add_job(cornReport, 'cron', hour='0', minute='0', second='30', timezone='Asia/Shanghai', args=[api, reportId])
+    schedule.add_job(cornReport, 'cron', hour='0', minute='0', second='0', timezone='Asia/Shanghai', args=[api, reportId])
     schedule.start()
     
     while True:
@@ -41,3 +41,4 @@ if __name__ == "__main__":
             n = Notice()
             n.notice("error", "Error", str(e))
             break
+

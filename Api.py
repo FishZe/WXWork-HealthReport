@@ -102,3 +102,32 @@ class Api:
             n = Notice()
             n.notice("error", "Auto Health Report Error",
                      "Unknown Error occurred when submitting the report, please copy the error information and make a new issue to me")
+
+    def getGeolocation(self) -> dict:
+        url = "https://apis.map.qq.com/ws/location/v1/ip?key=TKUBZ-D24AF-GJ4JY-JDVM2-IBYKK-KEBCU"
+        try:
+            r = requests.get(url, headers=self.headers)
+            res = json.loads(r.text)
+            if res['status'] != 0:
+                n = Notice()
+                n.notice("error", "Get Geolocation Error", "I'll tried it again.")
+                time.sleep(1)
+                return self.getGeolocation()
+        except Exception as e:
+            print(e)
+            n = Notice()
+            n.notice("error", "Get Geolocation Error",
+                     "Unknown Error occurred when getting geolocation, please copy the error information and make a new issue to me")
+            return {}
+        return {"module": "geolocation",
+                "type": "ip",
+                "accuracy": 10000,
+                "adcode": res['result']['ad_info']['adcode'],
+                "nation": res['result']['ad_info']['nation'],
+                "province": res['result']['ad_info']['province'],
+                "city": res['result']['ad_info']['city'],
+                "lat": res['result']['location']['lat'],
+                "lng": res['result']['location']['lng'],
+                "addr": f"{res['result']['ad_info']['province']}{res['result']['ad_info']['city']}{res['result']['ad_info']['district']}({res['result']['location']['lng']},{res['result']['location']['lat']})",
+                "exportText": f"{res['result']['ad_info']['province']}{res['result']['ad_info']['city']}{res['result']['ad_info']['district']}({res['result']['location']['lng']},{res['result']['location']['lat']})"
+                }

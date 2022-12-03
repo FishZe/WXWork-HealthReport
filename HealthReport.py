@@ -5,8 +5,40 @@ from Api import Api
 from Notice import Notice
 
 
+def getLocationAnswer(api) -> str:
+    # 获取定位题目
+    print("This question need your location, you can choose to:")
+    print("\t1. input your location(json string):")
+    print("\t2. use auto location(NJUPT):")
+    print("\t3. use your IP to get location:")
+    print("Please input your answer(number), end with enter: ", end=" ")
+    choice = int(input())
+    while choice not in [1, 2, 3]:
+        print("Your answer is not in the sections, please input your answer agine: ", end=" ")
+        choice = int(input())
+    if choice == 1:
+        print("Please input your location(json string): ", end=" ")
+        answer = input()
+    elif choice == 2:
+        answer = '{"type":"","nation":"中国","province":"江苏省","city":"南京市","district":"栖霞区","addr":"江苏省南京市南京邮电大学(仙林校区)","lat":32.11586,"lng":118.9333,"module":"wework-native","exportText":"江苏省南京市南京邮电大学(仙林校区)"}'
+        print(
+            f"NJUPT's location: {json.loads(answer)['province']} {json.loads(answer)['city']} {json.loads(answer)['district']} {json.loads(answer)['addr']}")
+    elif choice == 3:
+        answer = api.getGeolocation()
+        print(f"Your location: {answer['province']} {answer['city']} {answer['addr']}, do you want to use it? (y/n): ",
+              end="")
+        choice = input()
+        while choice not in ["y", "n"]:
+            print("Your answer is not in the sections, please input your answer agine: ", end=" ")
+            choice = input()
+        if choice == "n":
+            print("Please re-input your choice.")
+            getLocationAnswer(api)
+        answer = json.dumps(answer)
+    return answer
+
 # 获取单个问题答案
-def getQuestionAnswer(item: dict) -> dict:
+def getQuestionAnswer(item: dict, api) -> dict:
     print(f"Question {item['question_id']}: {item['title']}")
     res = {"question_id": item['question_id'], "text_reply": "", "option_reply": []}
     if len(item['option_item']) != 0:
@@ -29,17 +61,9 @@ def getQuestionAnswer(item: dict) -> dict:
         # 填空题
         answer = ""
         if "reply_type" in item.keys() and item['reply_type'] == 5:
-            # 获取定位题目
-            print(
-                "This question need your location, you can choose to: \n\t1. input your location(json string) \n\t2. use auto location(NJUPT):")
-            print("Please input your answer(number), end with enter: ", end=" ")
-            choice = int(input())
-            if choice == 1:
-                print("Please input your location(json string): ", end=" ")
-                answer = input()
-            elif choice == 2:
-                answer = '{"type":"","nation":"中国","province":"江苏省","city":"南京市","district":"栖霞区","addr":"江苏省南京市南京邮电大学(仙林校区)","lat":32.11586,"lng":118.9333,"module":"wework-native","exportText":"江苏省南京市南京邮电大学(仙林校区)"}'
+            answer = getLocationAnswer(api)
         else:
+            # 获取普通填空题目
             print("This question has no option, please input your text answer, end with enter: ", end=" ")
             answer = input()
         res['text_reply'] = answer
@@ -47,7 +71,7 @@ def getQuestionAnswer(item: dict) -> dict:
 
 
 # 获取所有答案 带有问题更新检测
-def getAllAnswer(items: list) -> list:
+def getAllAnswer(items: list, api) -> list:
     with open("./json/answer.json", "r") as f:
         originAnswer = json.load(f)
     with open("./json/report.json", "r") as f:
@@ -61,7 +85,7 @@ def getAllAnswer(items: list) -> list:
             if "status" in i.keys() and i["status"] == 2:
                 # 该题目被禁用
                 continue
-            answer.append(getQuestionAnswer(i))
+            answer.append(getQuestionAnswer(i, api))
         # 更新答案和问题
         with open("./json/answer.json", "w") as f:
             f.write(json.dumps(answer))
@@ -87,7 +111,7 @@ def getAllAnswer(items: list) -> list:
                         break
             else:
                 # 问题不存在
-                answer.append(getQuestionAnswer(i))
+                answer.append(getQuestionAnswer(i, api))
         # 更新答案和问题
         with open("./json/answer.json", "w") as f:
             f.write(json.dumps(answer))
@@ -109,7 +133,7 @@ def cornReport(api, formId, answerId=-1):
         time.sleep(10)
         cornReport(api, formId, answerId)
         return
-    answers = getAllAnswer(questions['form']['question']['items'])
+    answers = getAllAnswer(questions['form']['question']['items'], api)
     api.submitReport(answers, formId, answerId)
     time.sleep(1)
     reportInfo = api.getReportInfo(formId)
@@ -177,7 +201,7 @@ def startChecker(api: Api) -> bool:
     if reportInfo == [] or reportInfo is None or reportInfo == {}:
         n.notice("error", "Get Report Error", "Get report question error, please check your report.")
         return False
-    getAllAnswer(reportInfo['form']['question']['items'])
+    getAllAnswer(reportInfo['form']['question']['items'], api)
     if "answer_id" in reportInfo.keys():
         n.notice("info", "Report", f"You have already submitted the report, your id is {reportInfo['answer_id']}")
     else:
