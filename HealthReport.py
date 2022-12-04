@@ -104,11 +104,14 @@ def getAllAnswer(items: list, api) -> list:
                 continue
             if i in originReport:
                 # 问题已经存在
-                for j in originAnswer:
-                    # 找到原有的的答案
-                    if j['question_id'] == i['question_id']:
-                        answer.append(j)
-                        break
+                # for j in originAnswer:
+                #     # 找到原有的的答案
+                #     if j['question_id'] == i['question_id']:
+                #         answer.append(j)
+                #         break
+                if j.find(i['question_id']) != -1:
+                    answer.append(j)
+                    break
             else:
                 # 问题不存在
                 answer.append(getQuestionAnswer(i, api))
