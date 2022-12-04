@@ -98,20 +98,18 @@ def getAllAnswer(items: list, api) -> list:
         n.notice("warning", "Question updated",
                  "The question has been updated, please update your answer in the console.")
         answer = []
+        rawReport = rawAnswer = {}
+        for i in originAnswer:
+            rawAnswer[i['question_id']] = i
+        for i in items:
+            rawReport[i['question_id']] = i
         for i in items:
             if "status" in i.keys() and i["status"] == 2:
                 # 该题目被禁用
                 continue
             if i in originReport:
-                # 问题已经存在
-                # for j in originAnswer:
-                #     # 找到原有的的答案
-                #     if j['question_id'] == i['question_id']:
-                #         answer.append(j)
-                #         break
-                if j.find(i['question_id']) != -1:
-                    answer.append(j)
-                    break
+                # 问题已经存在（未发生修改）
+                answer.append(rawAnswer[i['question_id']])
             else:
                 # 问题不存在
                 answer.append(getQuestionAnswer(i, api))
