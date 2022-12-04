@@ -24,7 +24,8 @@ class Api:
             r = requests.post(url,
                               headers=self.headers,
                               cookies=self.cookies,
-                              data={"operatorid": self.cookies['wedrive_uin'], "vids": self.cookies['wedrive_uin'],
+                              data={"operatorid": self.cookies['wedrive_uin'],
+                                    "vids": self.cookies['wedrive_uin'],
                                     "need_root_party": "true"})
             res = json.loads(r.text)
             if res['result']['errCode'] != 0:
@@ -59,7 +60,11 @@ class Api:
             return {}
         return res['data']
 
-    def getReportInfo(self, formId) -> dict:
+    def getReportInfo(self, formId: str) -> dict:
+        """
+            :param formId: 报告Id, 存于json/data.json中
+            :return dict: 报告信息
+        """
         url = f"https://work.weixin.qq.com/healthreport/share?_t={time.time()}&f=json&form_id={formId}{int(time.time()) - int(time.time() - time.timezone) % 86400}"
         try:
             r = requests.post(url, headers=self.headers, cookies=self.cookies)
@@ -67,6 +72,7 @@ class Api:
             if res['result']['errCode'] != 0:
                 n = Notice()
                 n.notice("error", "Get Report Info Error", "I'll tried it later.")
+                time.sleep(10)
                 return self.getReportInfo(formId)
         except Exception as e:
             print(e)
@@ -76,7 +82,13 @@ class Api:
             return {}
         return res['data']
 
-    def submitReport(self, answer, formId, answerId=-1):
+    def submitReport(self, answer: dict, formId: str, answerId: int = 1) -> bool:
+        """
+            :param answer: 上报的答案
+            :param formId: 报告的Id
+            :param answerId: 已经提交过的报告Id, 默认为1时为初次提交, 否则为覆盖提交
+            :return bool: 是否提交成功
+        """
         url = "https://work.weixin.qq.com/healthreport/share?f=json"
         data = {
             "key": (None, ""),
@@ -102,6 +114,8 @@ class Api:
             n = Notice()
             n.notice("error", "Auto Health Report Error",
                      "Unknown Error occurred when submitting the report, please copy the error information and make a new issue to me")
+            return False
+        return True
 
     def getGeolocation(self) -> dict:
         url = "https://apis.map.qq.com/ws/location/v1/ip?key=TKUBZ-D24AF-GJ4JY-JDVM2-IBYKK-KEBCU"
@@ -131,3 +145,35 @@ class Api:
                 "addr": f"{res['result']['ad_info']['province']}{res['result']['ad_info']['city']}{res['result']['ad_info']['district']}({res['result']['location']['lng']},{res['result']['location']['lat']})",
                 "exportText": f"{res['result']['ad_info']['province']}{res['result']['ad_info']['city']}{res['result']['ad_info']['district']}({res['result']['location']['lng']},{res['result']['location']['lat']})"
                 }
+
+    def searchLocation(self, keyword: str, region: str = "南京", page: int = 1) -> tuple:
+        """
+            :param keyword: 搜索关键字
+            :param region: 地区
+            :param page: 页码
+            :return tuple: 结果和页码
+        """
+        url = "https://apis.map.qq.com/ws/place/v1/suggestion"
+        params = {
+            "key": "TKUBZ-D24AF-GJ4JY-JDVM2-IBYKK-KEBCU",
+            "keyword": keyword,
+            "region": region,
+            "page_size": 20,
+            "page_index": page,
+            "get_subpois": 0
+        }
+        try:
+            r = requests.get(url, headers=self.headers, params=params)
+            res = json.loads(r.text)
+            if res['status'] != 0:
+                n = Notice()
+                n.notice("error", "Search Location Error", "I'll tried it again.")
+                time.sleep(1)
+                return self.searchLocation(keyword, region, page)
+        except Exception as e:
+            print(e)
+            n = Notice()
+            n.notice("error", "Search Location Error",
+                     "Unknown Error occurred when searching location, please copy the error information and make a new issue to me")
+            return ()
+        return res['data'], res['count']
